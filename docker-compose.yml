@@ -1,0 +1,38 @@
+version: '3'
+services:
+
+  core:
+    build:
+     context: .
+     dockerfile: ./core/Dockerfile
+    command: sh -c "/bin/sh script.sh && tail -f /dev/null"
+    #command: sh -c "tail -f /dev/null"
+    volumes:
+      - ./core:/core
+      - ./common:/core/common
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+  updater:
+    build:
+     context: .
+     dockerfile: ./updater/Dockerfile
+    volumes:
+      - ./updater:/updater
+      - ./common:/updater/common
+    command: sh -c "python main.py"
+    depends_on:
+      - db
+      - core
+
+  db:
+    image: postgres:10.1-alpine
+    environment:
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin_pass"
+      POSTGRES_DB: "pg_core_db"
+      POSTGRES_PORT: "5432"
+    volumes:
+      - ./docker/postrges_volume:/var/lib/postgresql/data
